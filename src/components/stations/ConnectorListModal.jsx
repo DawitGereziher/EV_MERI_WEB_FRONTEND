@@ -46,11 +46,11 @@ const ConnectorListModal = ({ station, onClose, onUpdate }) => {
   };
 
   const handleConnectorUpdate = async () => {
-    // Refresh the connector list
+    // Refresh the connector list from the server
     await fetchConnectors();
-    if (onUpdate) {
-      await onUpdate();
-    }
+    // Note: we do NOT call onUpdate() here because that would trigger
+    // a PATCH /api/stations/undefined/ — the connector add/edit already
+    // talked directly to the API, so we just need to refresh the view.
   };
 
   const handleAddConnector = () => {
