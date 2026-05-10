@@ -17,6 +17,12 @@ const ConnectorListModal = ({ station, onClose, onUpdate }) => {
   }, [station]);
 
   const fetchConnectors = async () => {
+    if (!station?.id) {
+      console.error('ConnectorListModal: station.id is missing — cannot load connectors.');
+      setError('Station ID is missing.');
+      setLoading(false);
+      return;
+    }
     try {
       const token = localStorage.getItem('token');
       const response = await fetch(`https://mengedmate-backend.onrender.com/api/stations/${station.id}/`, {
@@ -28,13 +34,17 @@ const ConnectorListModal = ({ station, onClose, onUpdate }) => {
 
       if (response.ok) {
         const data = await response.json();
+        console.log('Fetched station data, connectors:', data.connectors);
         setConnectors(data.connectors || []);
+        setError('');
       } else {
-        throw new Error('Failed to fetch station data');
+        const errText = await response.text();
+        console.error(`Failed to fetch station (${response.status}):`, errText);
+        throw new Error(`Server returned ${response.status}`);
       }
     } catch (error) {
       console.error('Error fetching connectors:', error);
-      setError('Failed to load connectors');
+      setError(`Failed to load connectors: ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -47,10 +57,10 @@ const ConnectorListModal = ({ station, onClose, onUpdate }) => {
 
   const handleConnectorUpdate = async () => {
     // Refresh the connector list from the server
+    setLoading(true);
     await fetchConnectors();
-    // Note: we do NOT call onUpdate() here because that would trigger
-    // a PATCH /api/stations/undefined/ — the connector add/edit already
-    // talked directly to the API, so we just need to refresh the view.
+    // Note: we do NOT call onUpdate() here — the connector was already
+    // saved directly via the API. We only need to refresh the display.
   };
 
   const handleAddConnector = () => {
